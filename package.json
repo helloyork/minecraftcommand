@@ -6,20 +6,55 @@
   "engines": {
     "vscode": "^1.81.0"
   },
+  "main": "./src/extensions.js",
   "categories": [
     "Programming Languages"
   ],
   "contributes": {
-    "languages": [{
-      "id": "mcmd",
-      "aliases": ["mcmd", "mcmd"],
-      "extensions": [".mcmd"],
-      "configuration": "./language-configuration.json"
-    }],
-    "grammars": [{
-      "language": "mcmd",
-      "scopeName": "source.mcmd",
-      "path": "./syntaxes/mcmd.tmLanguage.json"
-    }]
-  }
+    "languages": [
+      {
+        "id": "mcmd",
+        "aliases": [
+          "mcmd",
+          "mcmd"
+        ],
+        "extensions": [
+          ".mcmds"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "documentSelector": [
+      {
+        "language": "mcmd",
+        "scheme": "file"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "mcmd",
+        "scopeName": "source.mcmd",
+        "path": "./syntaxes/mcmd.tmLanguage.json"
+      }
+    ]
+  },
+  "dependencies": {
+    "vscode": "^1.1.37",
+    "vscode-languageclient": "^7.0.0",
+    "vscode-languageserver": "^8.1.0",
+    "vscode-languageserver-textdocument": "^1.0.8"
+  },
+  "configuration": {
+    "type": "object",
+    "title": "Example configuration",
+    "properties": {
+      "languageServerExample.maxNumberOfProblems": {
+        "scope": "resource",
+        "type": "number",
+        "default": 100,
+        "description": "Controls the maximum number of problems produced by the server."
+      }
+    }
+  },
+  "type": "commonjs"
 }
