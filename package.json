@@ -1,0 +1,25 @@
+{
+  "name": "minecraftcommand",
+  "displayName": "minecraftCommand",
+  "description": "Minecraft Command Language Support",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.81.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "mcmd",
+      "aliases": ["mcmd", "mcmd"],
+      "extensions": [".mcmd"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "mcmd",
+      "scopeName": "source.mcmd",
+      "path": "./syntaxes/mcmd.tmLanguage.json"
+    }]
+  }
+}
