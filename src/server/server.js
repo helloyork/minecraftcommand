@@ -1,119 +1,111 @@
-const { createConnection,
-    TextDocuments,
-    Diagnostic,
-    DiagnosticSeverity,
-    ProposedFeatures,
-    InitializeParams,
-    DidChangeConfigurationNotification,
-    CompletionItem,
-    CompletionItemKind,
-    TextDocumentPositionParams,
-    TextDocumentSyncKind,
-    InitializeResult } = require('vscode-languageserver');
-const {
-    TextDocument
-} = require('vscode-languageserver-textdocument');
 
-let connection = createConnection(ProposedFeatures.all);
-let documents = new TextDocuments();
-// documents.onDidOpen((event) => {
-//     console.log(event)
-// });
+const { getConnection, getDocuments, hasDiagnosticRelatedInformationCapability, node_1 } = require("./lib/connection.js");
+const connection = getConnection();
+const documents = getDocuments();
 
-let hasConfigurationCapability = false;
-let hasWorkspaceFolderCapability = false;
-let hasDiagnosticRelatedInformationCapability = false;
 
-connection.onInitialize((params) => {
-    const capabilities = params.capabilities;
-    // Does the client support the `workspace/configuration` request?
-    // If not, we fall back using global settings.
-    hasConfigurationCapability = !!(
-        capabilities.workspace && !!capabilities.workspace.configuration
-    );
-    hasWorkspaceFolderCapability = !!(
-        capabilities.workspace && !!capabilities.workspace.workspaceFolders
-    );
-    hasDiagnosticRelatedInformationCapability = !!(
-        capabilities.textDocument &&
-        capabilities.textDocument.publishDiagnostics &&
-        capabilities.textDocument.publishDiagnostics.relatedInformation
-    );
-    const result = {
-        capabilities: {
-            textDocumentSync: TextDocumentSyncKind.Incremental,
-            // Tell the client that this server supports code completion.
-            completionProvider: {
-                resolveProvider: true
-            }
-        }
-    };
-    if (hasWorkspaceFolderCapability) {
-        result.capabilities.workspace = {
-            workspaceFolders: {
-                supported: true
-            }
+documents.onDidChangeContent(change => {
+    validateTextDocument(change.document);
+});
+async function validateTextDocument(textDocument) {
+    // 验证器为长度为 2 或以上的所有大写单词创建诊断程序
+    const text = textDocument.getText();
+    const pattern = /\b[A-Z]{2,}\b/g;
+    let m;
+    let problems = 0;
+    const diagnostics = [];
+    while ((m = pattern.exec(text)) && problems < 50) {
+        problems++;
+        const diagnostic = {
+            severity: node_1.DiagnosticSeverity.Warning,
+            range: {
+                start: textDocument.positionAt(m.index),
+                end: textDocument.positionAt(m.index + m[0].length)
+            },
+            message: `${m[0]} is all uppercase.`,
+            source: 'ex'
         };
+        if (hasDiagnosticRelatedInformationCapability) {
+            diagnostic.relatedInformation = [
+                {
+                    location: {
+                        uri: textDocument.uri,
+                        range: Object.assign({}, diagnostic.range)
+                    },
+                    message: 'Spelling matters'
+                },
+                {
+                    location: {
+                        uri: textDocument.uri,
+                        range: Object.assign({}, diagnostic.range)
+                    },
+                    message: 'Particularly for names'
+                }
+            ];
+        }
+        diagnostics.push(diagnostic);
     }
-    
-    // connection.onCompletion((textDocumentPosition) => {
-    //     console.log(textDocumentPosition)
-    //     // 基于 textDocumentPosition 提供代码补全项
-    //     return [
-    //         {
-    //             label: 'HelloWorld',
-    //             kind: 1, // Text
-    //             data: 1
-    //         }
-    //     ];
-    // });
+    // Send the computed diagnostics to VSCode.
+    connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+}
+connection.onDidChangeWatchedFiles(_change => {
+    // 监控文件的 VSCode 发生变化
+    connection.console.log('We received an file change event');
+});
 
-    // connection.onCompletionResolve((item) => {
-    //     if (item.data === 1) {
-    //         item.detail = 'HelloWorld details';
-    //         item.documentation = 'Type HelloWorld to log "Hello, World!"';
-    //     }
-    //     return item;
-    // });
-    return result;
+// 该处理程序提供完成项的初始列表。
+connection.onCompletion((_textDocumentPosition) => {
+    // 传入参数包含请求完成代码的文本文档的位置。
+    // 的位置。在示例中，我们将忽略此
+    // 信息，并始终提供相同的完成项。
+    return [
+        {
+            label: 'TypeScript',
+            kind: node_1.CompletionItemKind.Text,
+            data: 1
+        },
+        {
+            label: 'JavaScript',
+            kind: node_1.CompletionItemKind.Text,
+            data: 2
+        }
+    ];
 });
 
 connection.onHover(({ textDocument, position }) => {
+    // 获取文档
     const document = documents.get(textDocument.uri);
-    // console.log('Received hover request for:', textDocument);
-    console.log('Documents:', document);
-    // console.log(arguments[0])
-    // const text = document.getText();
-    // const lines = text.split(/\r?\n/g);
+    console.log(document)
+    if (!document) return {
+        contents: {
+            kind: "markdown",
+            value: '!document'
+        }
+    };
 
-    // const line = lines[position.line];
-    if(document){
-        return {
-            contents: [
-                { language: 'markdown', value: "HELLO WORLD!" }
-            ]
-        };
-    }
     return {
-        contents: [
-            { language: 'markdown', value: "qwq" }
-        ]
+        contents: {
+            kind: "markdown",
+            value: '**teleport** command: Teleports you to the specified destination'
+        }
     };
 });
-
-connection.onInitialized(() => {
-	if (hasConfigurationCapability) {
-		// Register for all configuration changes.
-		connection.client.register(DidChangeConfigurationNotification.type, undefined);
-	}
-	if (hasWorkspaceFolderCapability) {
-		connection.workspace.onDidChangeWorkspaceFolders(_event => {
-			connection.console.log('Workspace folder change event received.');
-		});
-	}
+// This handler resolves additional information for the item selected in
+// the completion list.
+connection.onCompletionResolve((item) => {
+    if (item.data === 1) {
+        item.detail = 'TypeScript details';
+        item.documentation = 'TypeScript documentation';
+    }
+    else if (item.data === 2) {
+        item.detail = 'JavaScript details';
+        item.documentation = 'JavaScript documentation';
+    }
+    return item;
 });
-
-
-
+// 使文本文档管理器监听连接
+// 打开、更改和关闭文本文档事件
 documents.listen(connection);
+// Listen on the connection
 connection.listen();
+//# sourceMappingURL=server.js.map

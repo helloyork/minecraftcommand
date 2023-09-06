@@ -7,7 +7,7 @@ const decorationType = {
         color: "#66d9ff",
     },
     // "operator":{
-    //     color: "gray",
+    //     color: "red",
     // },
     "mid":{
         color: "gray",
