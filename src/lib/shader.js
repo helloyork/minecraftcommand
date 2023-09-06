@@ -5,7 +5,7 @@ const decTypes = {};
 Object.keys(decorationType).forEach(v => decTypes[v] = vscode.window.createTextEditorDecorationType(decorationType[v]));
 
 function dec(tokens, document) {
-    if(!tokens) return;
+    if (!tokens) return;
     let result = [];
     for (let i = 0; i < tokens.length; i++) {
         if (!tokens[i].isRejected) result.push([
@@ -17,21 +17,21 @@ function dec(tokens, document) {
     return result;
 }
 
-function refresh(tokens, editor) {
-    let decs = dec(tokens, editor.document);
-    if(!decs) return;
+function refresh(content, editor) {
+    let decs = dec(content.tokens, editor.document);
+    if (!decs) return;
     let _dects = {};
 
     for (let i = 0; i < decs.length; i++) {
-        if(!_dects[decs[i][2]])_dects[decs[i][2]] = [];
+        if (!_dects[decs[i][2]]) _dects[decs[i][2]] = [];
         let decoration = {
-            range: new vscode.Range(decs[i][0],decs[i][1])
+            range: new vscode.Range(decs[i][0], decs[i][1])
         };
         _dects[decs[i][2]].push(decoration);
     }
-    for(let [k,v] of Object.entries(_dects)){
+    for (let [k, v] of Object.entries(_dects)) {
         editor.setDecorations(decTypes[k] || {
-            color:"#444444"
+            color: "#444444"
         }, v);
     }
 }

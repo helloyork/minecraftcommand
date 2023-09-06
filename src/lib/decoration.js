@@ -27,6 +27,9 @@ const decorationType = {
     "string":{
         color: "#ff9966",
     },
+    // "commands":{
+    //     color: "yellow",
+    // },
     // "compare":{
     //     color: "",
     // },

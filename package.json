@@ -1,7 +1,7 @@
 {
   "name": "minecraftcommand",
   "displayName": "minecraftCommand",
-  "description": "Minecraft Command Language Support",
+  "description": "Minecraft Command Language Support By Nomen(York)",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.81.0"

@@ -7,8 +7,8 @@ function active(){
 
     if (activeEditor) {
         let text = activeEditor.document.getText();
-        let tokens = lexer(text);
-        refresh(tokens, activeEditor);
+        let content = lexer(text);
+        if(content) refresh(content, activeEditor);
     }
 
     vscode.workspace.onDidChangeTextDocument((event) => {
@@ -16,8 +16,8 @@ function active(){
         if (activeEditor && event.document === activeEditor.document) {
             let text = event.document.getText();
             if (event.contentChanges.length) {
-                let tokens = lexer(text);
-                refresh(tokens, activeEditor);
+                let content = lexer(text);
+                if(content) refresh(content, activeEditor);
             }
         }
     });

@@ -81,6 +81,23 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
         if (typeof result === "object" && result !== undefined && result !== null) result._position = _position;
         return result;
     }
+    let rows = input.split("\n"), settings = {};
+    for (let i = 0; i < rows.length; i++) {
+        if (rows[i][0] !== "@") break;
+        let a = rows[i].split(" "), b = a.shift().slice(1), c = a.join(" ");
+        if (b.length) {
+            settings[b] = {
+                value:c
+            };
+        }
+        tokens.push(verbosePosition(function(){
+            current += b.length + c.length + 2;
+            return {
+                type:"ignore",
+                value:c
+            };
+        }))
+    }
 
     lexerMain: while (input[current] !== undefined) {
         if (rejected) break;
@@ -314,7 +331,14 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
         rejected = true;
         return reject(new Rejected("SyntaxError", `Unknown Token`, { start: current, end: current }));
     };
-    return tokens;
+    console.log({
+        tokens,
+        settings,
+    })
+    return {
+        tokens,
+        settings,
+    };
 }
 
 function getPosition(f, l) {
