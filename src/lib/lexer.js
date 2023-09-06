@@ -1,5 +1,15 @@
 
-const { Rejected } = require("./Rejected.js");
+
+class Rejected {
+    get isRejected() {
+        return true;
+    }
+    constructor(type, message, position) {
+        this.type = type;
+        this.message = message;
+        this.position = position;
+    }
+}
 
 const lexer = function (input, { reject } = { reject: () => { } }) {
     let current = 0, tokens = [], rejected = false;
@@ -84,14 +94,14 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
     let rows = input.split("\n"), settings = {};
     for (let i = 0; i < rows.length; i++) {
         if (rows[i][0] !== "@") break;
-        let a = rows[i].split(" "), b = a.shift().slice(1), c = a.join(" ");
+        let a = rows[i].split(" "), b = a.shift().slice(1), c = a.join(" ").slice(0,-1);
         if (b.length) {
             settings[b] = {
                 value:c
             };
         }
         tokens.push(verbosePosition(function(){
-            current += b.length + c.length + 2;
+            current += b.length + c.length + 4;
             return {
                 type:"ignore",
                 value:c
