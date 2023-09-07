@@ -94,17 +94,22 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
     let rows = input.split("\n"), settings = {};
     for (let i = 0; i < rows.length; i++) {
         if (rows[i][0] !== "@") break;
-        let a = rows[i].split(" "), b = a.shift().slice(1), c = a.join(" ").slice(0,-1);
+        let a = rows[i].split(" "), b = a.shift().slice(1), c = a.join(" ").slice(0, -1);
+        console.log([a,b,c])
         if (b.length) {
             settings[b] = {
-                value:c
+                value: c,
+                _position: {
+                    start: current,
+                    end: current + b.length + c.length + 3
+                }
             };
         }
-        tokens.push(verbosePosition(function(){
-            current += b.length + c.length + 4;
+        tokens.push(verbosePosition(function () {
+            current += rows[i].length;
             return {
-                type:"ignore",
-                value:c
+                type: "setting",
+                value: c
             };
         }))
     }
@@ -114,17 +119,6 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
         let char = input[current];
         if (/\s/.test(char)) {
             skip();
-            continue;
-        }
-
-        if (char === "\n" || char === "\r") {
-            tokens.push(verbosePosition(function () {
-                skip();
-                return {
-                    type: "newline",
-                    value: "\n",
-                };
-            }));
             continue;
         }
 
@@ -339,9 +333,10 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
         }
 
         rejected = true;
-        return reject(new Rejected("SyntaxError", `Unknown Token`, { start: current, end: current }));
+        tokens.push(reject(new Rejected("SyntaxError", `Unknown Token`, { start: current, end: current })));
     };
     console.log({
+        input,
         tokens,
         settings,
     })

@@ -8,7 +8,7 @@ function dec(tokens, document) {
     if (!tokens) return;
     let result = [];
     for (let i = 0; i < tokens.length; i++) {
-        if (!tokens[i].isRejected) result.push([
+        if (tokens[i] && !tokens[i].isRejected) result.push([
             document.positionAt(tokens[i]._position.start),
             document.positionAt(tokens[i]._position.end),
             tokens[i].type
@@ -30,9 +30,7 @@ function refresh(content, editor) {
         _dects[decs[i][2]].push(decoration);
     }
     for (let [k, v] of Object.entries(_dects)) {
-        editor.setDecorations(decTypes[k] || {
-            color: "#444444"
-        }, v);
+        editor.setDecorations(decTypes[k] || {}, v);
     }
 }
 

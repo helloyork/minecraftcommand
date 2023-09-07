@@ -1,12 +1,20 @@
 
 const { getConnection, getDocuments, hasDiagnosticRelatedInformationCapability, node_1 } = require("./lib/connection.js");
+const { setLang, getLocalize } = require("../lib/localize.js");
+const { parseCompletion } = require("./lib/parser.js");
 const connection = getConnection();
 const documents = getDocuments();
 
 
 documents.onDidChangeContent(change => {
-    (change.document);
+    if (change) {
+        parseCompletion(change.document.getText(), connection, change.document);
+    }
 });
+
+connection.onDidChangeConfiguration((change)=>{
+    console.log(change)
+})
 
 connection.onCompletion((_textDocumentPosition) => {
     return [
@@ -30,14 +38,14 @@ connection.onHover(({ textDocument, position }) => {
     if (!document) return {
         contents: {
             kind: "markdown",
-            value: '!document'
+            value: localize("a", "默认文字")
         }
     };
 
     return {
         contents: {
             kind: "markdown",
-            value: '**teleport** command: Teleports you to the specified destination'
+            value: localize("a", "默认文字")
         }
     };
 });
@@ -55,3 +63,7 @@ connection.onCompletionResolve((item) => {
 });
 documents.listen(connection);
 connection.listen();
+
+function localize(key, defaultText){
+    return getLocalize().localize(key, defaultText);
+}

@@ -3,6 +3,9 @@ const decorationType = {
     "ignore":{
         color: "gray",
     },
+    "setting":{
+        color: "gray",
+    },
     "number":{
         color: "#66d9ff",
     },

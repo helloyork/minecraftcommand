@@ -1,0 +1,1 @@
+fill minecraft:commandblock ~1 ~1 ~1 @e[type=item,tag=!skeleton]
