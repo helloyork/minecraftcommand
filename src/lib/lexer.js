@@ -127,7 +127,10 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
                 skip();
                 return {
                     type: "ignore",
-                    value: "/"
+                    value: "/",
+                    toString:function(){
+                        return "/";
+                    }
                 }
             }));
             continue;
@@ -136,9 +139,13 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
         // Number
         if (/^[0-9]$/.test(char)) {
             tokens.push(verbosePosition(function () {
+                let v = flowNumber();
                 return {
                     type: "number",
-                    value: flowNumber(),
+                    value: v,
+                    toString:function(){
+                        return v;
+                    }
                 };
             }));
             continue;
@@ -148,9 +155,13 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
         if (char === "-" && /^[0-9]$/.test(input[current + 1])) {
             tokens.push(verbosePosition(function () {
                 skip();
+                let v = flowNumber();
                 return {
                     type: "number",
-                    value: "-" + flowNumber(),
+                    value: "-" + v,
+                    toString:function(){
+                        return "-" + v;
+                    }
                 };
             }));
             continue;
@@ -163,6 +174,9 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
                 return {
                     type: "operator",
                     value: char,
+                    toString:function(){
+                        return char;
+                    }
                 }
             }));
             continue;
@@ -173,6 +187,9 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
                 return {
                     type: "mid",
                     value: char,
+                    toString:function(){
+                        return char;
+                    }
                 }
             }));
             continue;
@@ -184,12 +201,18 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
                     return {
                         type: "operator",
                         value: "=!",
+                        toString:function(){
+                            return "=!";
+                        }
                     }
                 }
                 skip();
                 return {
                     type: "operator",
                     value: char,
+                    toString:function(){
+                        return char;
+                    }
                 }
             }));
             continue;
@@ -210,6 +233,9 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
                 return {
                     type: "position",
                     value: char,
+                    toString:function(){
+                        return char;
+                    }
                 }
             }));
             skip();
@@ -223,9 +249,13 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
                 if (input[current] === undefined) {
                     return reject(new Rejected("SyntaxError", "Expected Tag Name", this._position.createEnd(current)));
                 }
+                let v = flowString();
                 return {
                     type: "tag",
-                    value: flowString(),
+                    value: v,
+                    toString:function(){
+                        return v;
+                    }
                 }
             }));
             continue;
@@ -245,6 +275,9 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
                     type: "selector",
                     value,
                     _position,
+                    toString:function(){
+                        return value;
+                    }
                 });
                 continue;
             } else {
@@ -252,6 +285,9 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
                     type: "name",
                     value,
                     _position,
+                    toString:function(){
+                        return value;
+                    }
                 });
                 continue;
             }
@@ -284,6 +320,9 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
                 return {
                     type: "string",
                     value,
+                    toString:function(){
+                        return value;
+                    }
                 };
             }));
             continue;
@@ -296,6 +335,9 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
                 return {
                     type: "compare",
                     value: "..",
+                    toString:function(){
+                        return "..";
+                    }
                 }
             }))
             continue;
@@ -307,7 +349,10 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
                 current += 2;
                 return {
                     type: "declaration",
-                    value: char
+                    value: char,
+                    toString:function(){
+                        return char;
+                    }
                 }
             }));
             continue;
@@ -323,10 +368,16 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
                 if (name === "true" || name === "false") return {
                     type: "boolean",
                     value: name,
+                    toString:function(){
+                        return name;
+                    }
                 }
                 return {
                     type: "name",
                     value: name,
+                    toString:function(){
+                        return name;
+                    }
                 };
             }));
             continue;

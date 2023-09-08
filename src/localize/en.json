@@ -2,5 +2,8 @@
     "a":"ENGLISH!",
     "error:unknownVersion_1":"Unknown Version",
     "error:unknownVersion_2":",please check the list of available versions",
+    "error:missing[":"Missing ']'",
+    "error:invalid":"Invalid Token",
+    "error:requireName": "Expected Name",
     "information:supportedVersions": "Supported Versions: "
 }
