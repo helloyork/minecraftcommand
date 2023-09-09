@@ -1,4 +1,5 @@
-
+// @todo 完成节点搜寻
+// @todo 注意一下对象字段的位置追踪
 
 const { load, defaluVersion, supportedVersions } = require("../../lib/load.js");
 const { setLang, getLocalize } = require("../../lib/localize.js");
@@ -43,7 +44,7 @@ function init(settings, methods) {
 }
 
 function parse(content, connection, document, { reject } = { reject: () => { } }) {
-    console.log(content)
+    // console.log(content)
     let diagnostics = [];
     function genDiagnostic(level, position, message, source, information = []) {
         if (!position) return;
@@ -103,34 +104,92 @@ function parse(content, connection, document, { reject } = { reject: () => { } }
 
         // setting
         if (token.type === "setting") {
-            return null;
+            skip();
+            return undefined;
         }
 
         // ignore
         if (token.type === "ignore" && token.value === "/") {
             return verbosePosition(function () {
                 skip();
-                let args = [];
+                if (tokens[current].type !== "name") {
+                    let l = this;
+                    reject({
+                        type: "Error",
+                        message: localize("error:invalid"),
+                        _position: l._position.createEnd(current - 1)
+                    });
+                    return null;
+                }
+                let commandName = tokens[current];
+                skip();
+                let args = [], rejected = false;
                 while (tokens[current] !== undefined) {
                     if (tokens[current].type !== 'ignore') {
                         let c = walk();
-                        if (c) args.push(c);
+                        if (c === null) rejected = true;
+                        if (c && !rejected) args.push(c);
+                    }else {
+                        break;
                     }
                 }
                 return {
                     type: "Command",
+                    value: commandName,
                     args,
                 }
             })
         }
 
-        // number
+        // number & NumberExpression
         if (token.type === "number") {
             return verbosePosition(function () {
                 skip();
+                let c = null, d = null;
+                if (tokens[current]&&tokens[current].type === "compare") {
+                    d = ">";
+                    skip();
+                    if (tokens[current].type === "number") {
+                        c = walk();
+                        d = "~";
+                    };
+                    return {
+                        type: "NumberExpression",
+                        compare: d,
+                        value: {
+                            left: token.value,
+                            right: c
+                        }
+                    }
+                }
                 return {
                     type: "Number",
                     value: token.value
+                }
+            });
+        }
+
+        // compare
+        if (token.type === "compare") {
+            return verbosePosition(function () {
+                skip();
+                if (tokens[current] === undefined) {
+                    let l = this;
+                    reject({
+                        type: "Error",
+                        message: localize("error:expectedNumber"),
+                        _position: l._position.createEnd(current - 1)
+                    });
+                    return null;
+                }
+                let v = walk();
+                return {
+                    type: "NumberExpression",
+                    compare: "<",
+                    value: {
+                        left: null,
+                        right: v,
+                    }
                 }
             });
         }
@@ -151,7 +210,7 @@ function parse(content, connection, document, { reject } = { reject: () => { } }
                         reject({
                             type: "Error",
                             message: localize("error:missing["),
-                            _position: l.createEnd(current - 1)
+                            _position: l._position.createEnd(current - 1)
                         });
                         return null;
                     }
@@ -172,9 +231,15 @@ function parse(content, connection, document, { reject } = { reject: () => { } }
             return verbosePosition(function () {
                 skip();
                 let value = {};
-                while (true) {
+                while (tokens[current] !== "operator" && tokens[current].value !== "}") {
                     if (tokens[current] === undefined) {
-                        break;
+                        let l = this;
+                        reject({
+                            type: "Error",
+                            message: localize("error:missing{"),
+                            _position: l._position.createEnd(current)
+                        });
+                        return null;
                     }
                     if (tokens[current].type === "operator" && tokens[current].value === "}") {
                         skip();
@@ -188,18 +253,20 @@ function parse(content, connection, document, { reject } = { reject: () => { } }
                             if (tokens[current] && (tokens[current].type !== "operator" || tokens[current].value !== "}")) {
                                 value[name] = walk();
                             } else {
+                                let l = this;
                                 reject({
                                     type: "Error",
                                     message: localize("error:invalid"),
-                                    _position: l.createEnd(current)
+                                    _position: l._position.createEnd(current)
                                 });
                                 return null;
                             }
                         } else {
+                            let l = this;
                             reject({
                                 type: "Error",
                                 message: localize("error:invalid"),
-                                _position: l.createEnd(current)
+                                _position: l._position.createEnd(current)
                             })
                             return null;
                         }
@@ -208,14 +275,14 @@ function parse(content, connection, document, { reject } = { reject: () => { } }
                         reject({
                             type: "Error",
                             message: localize("error:invalid"),
-                            _position: l.createEnd(current)
+                            _position: l._position.createEnd(current)
                         })
                         return null;
                     }
-                    if (tokens[current].type === "mid" && tokens[current].value === ",") {
-                        skip();
-                        continue;
-                    }
+                }
+                return {
+                    type: "Scope",
+                    value,
                 }
             })
         }
@@ -227,16 +294,16 @@ function parse(content, connection, document, { reject } = { reject: () => { } }
                 skip();
                 if (tokens[current].type === "mid" && (tokens[current].value === ":" || tokens[current].value === ".")) {
                     let _type = ({
-                        ":":"RegistrationName",
-                        ".":"ReadExpression",
+                        ":": "RegistrationName",
+                        ".": "ReadExpression",
                     })[tokens[current].value], sec = null;
                     skip();
-                    if(tokens[current+1] === undefined){
+                    if (tokens[current + 1] === undefined) {
                         let l = this;
                         reject({
                             type: "Error",
                             message: localize("error:requireName"),
-                            _position: l.createEnd(current)
+                            _position: l._position.createEnd(current)
                         });
                         return null;
                     }
@@ -248,15 +315,231 @@ function parse(content, connection, document, { reject } = { reject: () => { } }
                             right: sec,
                         }
                     }
-                }else {
+                } else {
                     return {
                         type: "Name",
                         value: n
                     }
                 }
             })
-
         }
+
+        // Relative Position
+        if (token.type === "position") {
+            return verbosePosition(function () {
+                let positionType = token.value;
+                let v = [token.value];
+                skip();
+                for (let i = 0; i < 2; i++) {
+                    if (tokens[current] === undefined) {
+                        reject({
+                            type: "Error",
+                            message: localize("error:expectedPosition"),
+                            _position: l._position.createEnd(current)
+                        });
+                        return null;
+                    }
+                    let value = tokens[current];
+                    if (value.type === "number" || value.type === "position") {
+                        if (value.type === "position" && value.value !== positionType) {
+                            reject({
+                                type: "Error",
+                                message: localize("error:positionMix"),
+                                _position: l._position.createEnd(current)
+                            });
+                            return null;
+                        }
+                        v.push(value.value);
+                    } else {
+                        reject({
+                            type: "Error",
+                            message: localize("error:expectedPosition"),
+                            _position: l._position.createEnd(current)
+                        });
+                        return null;
+                    }
+                }
+                return {
+                    type: "Position",
+                    value: v
+                }
+            });
+        }
+
+        // Tag
+        if (token.type === "tag") {
+            return verbosePosition(function () {
+                skip();
+                return {
+                    type: "Tag",
+                    value: token.value
+                }
+            })
+        }
+
+        // Target Selector
+        if (token.type === "selector") {
+            return verbosePosition(function () {
+                let selectorType = token.value;
+                skip();
+                if (tokens[current].type === "operator" && tokens[current].value === "[") {
+                    skip();
+                    let filter = [];
+                    while (tokens[current].type !== "operator" || tokens[current].value !== "]") {
+                        if (tokens[current].type === "operator" && tokens[current].value === "]") {
+                            skip();
+                            break;
+                        }
+                        if (tokens[current] === undefined) {
+                            let l = this;
+                            reject({
+                                type: "Error",
+                                message: localize("error:missing["),
+                                _position: l._position.createEnd(current)
+                            });
+                            return null;
+                        }
+                        let item = walk(), compare = null, right = null;
+                        if (tokens[current].type !== "operator" || !["=", "=!"].includes(tokens[current].value)) {
+                            let l = this;
+                            reject({
+                                type: "Error",
+                                message: localize("error:invalidToken"),
+                                _position: l._position.createEnd(current)
+                            });
+                            return null;
+                        }
+                        compare = tokens[current].value;
+                        skip();
+                        if (!tokens[current]) {
+                            let l = this;
+                            reject({
+                                type: "Error",
+                                message: localize("error:invalidToken"),
+                                _position: l._position.createEnd(current)
+                            });
+                            return null;
+                        }
+                        if (tokens[current].type === "operator" && tokens[current].value === "{") {
+                            let v = [];
+                            skip();
+                            while (tokens[current].type !== "operator" || tokens[current].value !== "}") {
+                                if (tokens[current] === undefined) {
+                                    let l = this;
+                                    reject({
+                                        type: "Error",
+                                        message: localize("error:missing{"),
+                                        _position: l._position.createEnd(current)
+                                    });
+                                    return null;
+                                }
+                                if(tokens[current].type !== "name"){
+                                    let l = this;
+                                    reject({
+                                        type: "Error",
+                                        message: localize("error:invalid"),
+                                        _position: l._position.createEnd(current)
+                                    })
+                                    return null;
+                                }
+                                let left = walk(), compare, right;
+                                if (tokens[current] && tokens[current].type === "compare") {
+                                    compare = tokens[current];
+                                    skip();
+                                } else {
+                                    let l = this;
+                                    reject({
+                                        type: "Error",
+                                        message: localize("error:invalid"),
+                                        _position: l._position.createEnd(current)
+                                    })
+                                    return null;
+                                }
+                                if(tokens[current] === undefined){
+                                    let l = this;
+                                    reject({
+                                        type: "Error",
+                                        message: localize("error:invalid"),
+                                        _position: l._position.createEnd(current)
+                                    })
+                                    return null;
+                                }
+                                right = walk();
+                                v.push({left, compare, right}) 
+                                if(tokens[current].type === "mid" && tokens[current].value === ","){
+                                    skip();
+                                }
+                            }
+                        } else {
+                            right = walk();
+                        }
+                        filter.push({ left: item, compare, right });
+                        if (tokens[current].type === "mid" && tokens[current].value === ",") {
+                            skip();
+                        }
+                    }
+                    skip();
+                    return {
+                        type: "Selector",
+                        value: selectorType,
+                        filter,
+                    }
+                }
+                return {
+                    type: "Selector",
+                    value: selectorType,
+                }
+            })
+        }
+
+        // String
+        if (token.type === "string") {
+            return verbosePosition(function () {
+                skip();
+                return {
+                    type: "String",
+                    value: token.value
+                }
+            });
+        }
+
+        // Name
+        if (token.type === "name") {
+            return verbosePosition(function () {
+                skip();
+                return {
+                    type: "Name",
+                    value: token.value
+                }
+            });
+        }
+
+        console.log(tokens.slice(current - 2, current + 2))
+        throw new Error("Unknown Token: " + JSON.stringify(token));
+    }
+
+    let body = [];
+    let count = 0;
+    while (current < tokens.length) {
+        if (count > 300) throw new Error(`Count Stop`)
+        let result = walk();
+        // console.log(result);
+        if (result) body.push(result);
+        count++;
+    }
+    return body;
+}
+
+function findNode(ast, position){
+    if(!ast || !ast._position) return null;
+    if(ast._position.start > position || ast._position.end < position) return null;
+    if(ast.type === "Command") {
+        for(let c of ast.args) {
+            let found = findNode(c, position);
+            if(found) return found;
+        }
+    } else if (["Number"].includes(ast.type)) {
+        return ast
     }
 }
 
@@ -273,6 +556,13 @@ function parseCompletion(content, connection, document) {
     parse(lexer(content), connection, document);
 }
 
+function test(content, connection, document, handlers = { reject: console.log }) {
+    let res = parse(lexer(content, { reject: console.log }), connection, document, handlers);
+    console.log(res);
+    return res;
+}
+
 module.exports = {
+    test,
     parseCompletion,
 }

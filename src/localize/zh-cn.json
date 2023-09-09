@@ -1,9 +1,14 @@
 {
-    "a":"中文！",
-    "error:unknownVersion_1":"未知的版本",
-    "error:unknownVersion_2":",请检查可用版本列表",
-    "error:missing[":"缺少 ']'",
-    "error:invalid":"无效的字符",
+    "a": "中文！",
+    "error:unknownVersion_1": "未知的版本",
+    "error:unknownVersion_2": ",请检查可用版本列表",
+    "error:missing[": "缺少 ']'",
+    "error:missing{": "缺少 '}'",
+    "error:invalid": "无效的字符",
     "error:requireName": "预期应该是注册名",
+    "error:expectedNumber": "预期应该是数字",
+    "error:expectedPosition": "预期应该是坐标",
+    "error:positionMix": "坐标不能混用",
+    "error:invalidToken": "无效的语法",
     "information:supportedVersions": "可用的版本: "
 }

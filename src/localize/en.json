@@ -1,9 +1,14 @@
 {
-    "a":"ENGLISH!",
-    "error:unknownVersion_1":"Unknown Version",
-    "error:unknownVersion_2":",please check the list of available versions",
-    "error:missing[":"Missing ']'",
-    "error:invalid":"Invalid Token",
+    "a": "ENGLISH!",
+    "error:unknownVersion_1": "Unknown Version",
+    "error:unknownVersion_2": ",please check the list of available versions",
+    "error:missing[": "Missing ']'",
+    "error:missing{": "Missing '}'",
+    "error:invalid": "Invalid Token",
     "error:requireName": "Expected Name",
+    "error:expectedNumber": "Expected Number",
+    "error:expectedPosition": "Expected Position",
+    "error:positionMix": "Position cannot mix",
+    "error:invalidToken": "Invalid Grammar",
     "information:supportedVersions": "Supported Versions: "
 }

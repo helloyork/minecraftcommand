@@ -1,22 +1,25 @@
 
 const { getConnection, getDocuments, hasDiagnosticRelatedInformationCapability, node_1 } = require("./lib/connection.js");
 const { setLang, getLocalize } = require("../lib/localize.js");
-const { parseCompletion } = require("./lib/parser.js");
+const { parseCompletion, test } = require("./lib/parser.js");
 const connection = getConnection();
 const documents = getDocuments();
 
 
 documents.onDidChangeContent(change => {
     if (change) {
-        parseCompletion(change.document.getText(), connection, change.document);
+        // console.log(change.document.getText());
+        // content, connection, document
+        test(change.document.getText(), connection, change.document)
+        // parseCompletion(change.document.getText(), connection, change.document);
     }
 });
 
-connection.onDidChangeConfiguration((change)=>{
-    console.log(change)
+connection.onDidChangeConfiguration((change) => {
+    // console.log(change)
 })
 
-connection.onCompletion((_textDocumentPosition) => {
+connection.onCompletion((textDocument) => {
     return [
         {
             label: 'TypeScript',
@@ -34,7 +37,7 @@ connection.onCompletion((_textDocumentPosition) => {
 connection.onHover(({ textDocument, position }) => {
     // 获取文档
     const document = documents.get(textDocument.uri);
-    console.log(document)
+    // console.log(document)
     if (!document) return {
         contents: {
             kind: "markdown",
@@ -64,6 +67,6 @@ connection.onCompletionResolve((item) => {
 documents.listen(connection);
 connection.listen();
 
-function localize(key, defaultText){
+function localize(key, defaultText) {
     return getLocalize().localize(key, defaultText);
 }
