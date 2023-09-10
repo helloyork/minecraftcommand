@@ -95,7 +95,6 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
     for (let i = 0; i < rows.length; i++) {
         if (rows[i][0] !== "@") break;
         let a = rows[i].split(" "), b = a.shift().slice(1), c = a.join(" ").slice(0, -1);
-        console.log([a,b,c])
         if (b.length) {
             settings[b] = {
                 value: c,
@@ -387,7 +386,6 @@ const lexer = function (input, { reject } = { reject: () => { } }) {
         tokens.push(reject(new Rejected("SyntaxError", `Unknown Token`, { start: current, end: current })));
     };
     console.log({
-        input,
         tokens,
         settings,
     })

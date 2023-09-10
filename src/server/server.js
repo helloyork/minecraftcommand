@@ -1,16 +1,18 @@
 
 const { getConnection, getDocuments, hasDiagnosticRelatedInformationCapability, node_1 } = require("./lib/connection.js");
 const { setLang, getLocalize } = require("../lib/localize.js");
-const { parseCompletion, test } = require("./lib/parser.js");
+const { parseCompletion, test, findToken, parser, flat } = require("./lib/parser.js");
 const connection = getConnection();
 const documents = getDocuments();
 
+let parseResult = null;
 
 documents.onDidChangeContent(change => {
     if (change) {
+        parseResult = parser(change.document.getText(), connection, change.document);
         // console.log(change.document.getText());
         // content, connection, document
-        test(change.document.getText(), connection, change.document)
+        // test(change.document.getText(), connection, change.document)
         // parseCompletion(change.document.getText(), connection, change.document);
     }
 });
@@ -37,18 +39,12 @@ connection.onCompletion((textDocument) => {
 connection.onHover(({ textDocument, position }) => {
     // 获取文档
     const document = documents.get(textDocument.uri);
-    // console.log(document)
-    if (!document) return {
-        contents: {
-            kind: "markdown",
-            value: localize("a", "默认文字")
-        }
-    };
-
+    console.log(parseResult);
+    console.log(findToken(flat(parseResult), document.offsetAt(position)))
     return {
         contents: {
             kind: "markdown",
-            value: localize("a", "默认文字")
+            value: findToken(flat(parseResult), document.offsetAt(position))
         }
     };
 });
